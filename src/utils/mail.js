@@ -1,43 +1,43 @@
 import Mailgen from "mailgen";
 import nodemailer from "nodemailer";
 
-const sendEmail = async (options) =>
-{
-    const mailGenerator = new Mailgen({
-        theme: "default",
-        product: {
-            name: "Project Management App",
-            link: "https://project-management-app.com",
-        },
-    });
-    const emailTextual = mailGenerator.generate(options.mailgenContent);
+const sendEmail = async (options) => {
+  // 1️⃣ Mailgen setup
+  const mailGenerator = new Mailgen({
+    theme: "default",
+    product: {
+      name: "Project Management App",
+      link: "https://project-management-app.com",
+    },
+  });
 
-    const emailHtml = mailGenerator.generateHtml(options.mailgenContent);
+  // 2️⃣ Generate HTML email (ONLY THIS METHOD EXISTS)
+  const emailHtml = mailGenerator.generate(options.mailgenContent);
 
-    const transporter = nodemailer.createTransport({
-        host: process.env.EMAIL_HOST,
-        port: process.env.EMAIL_PORT,
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-        },
-    });
+  // 3️⃣ Nodemailer transporter
+  const transporter = nodemailer.createTransport({
+    host: process.env.EMAIL_HOST,
+    port: Number(process.env.EMAIL_PORT),
+    secure: false, // true only for port 465
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
 
-    const mail = {
-        from: "mail.taskmanager@example.com",
-        to: options.to,
-        subject: options.subject,
-        text: emailTextual,
-        html: emailHtml,
-    };
+  // 4️⃣ Email options
+  const mail = {
+    from: `"Project Management" <${process.env.EMAIL_USER}>`,
+    to: options.email, // ✅ FIXED
+    subject: options.subject,
+    html: emailHtml,
+  };
 
-    try {
-        await transporter.sendMail(mail);
-    } catch (error) {
-        console.error("Error sending email:", error);
-    }
+  // 5️⃣ Send email
+  await transporter.sendMail(mail);
+};
 
-}
+/// 📧 Email verification template
 const emailVerificationMailgenContent = (username, verificationUrl) => {
   return {
     body: {
@@ -51,11 +51,13 @@ const emailVerificationMailgenContent = (username, verificationUrl) => {
           link: verificationUrl,
         },
       },
-      outro: "Need help or have questions? Just reply to this email — we'd love to help.",
+      outro:
+        "Need help or have questions? Just reply to this email — we'd love to help.",
     },
   };
 };
 
+/// 🔐 Forgot password template
 const forgotPasswordMailgenContent = (username, resetUrl) => {
   return {
     body: {
@@ -69,9 +71,14 @@ const forgotPasswordMailgenContent = (username, resetUrl) => {
           link: resetUrl,
         },
       },
-      outro: "If you didn't request a password reset, you can safely ignore this email.",
+      outro:
+        "If you didn't request a password reset, you can safely ignore this email.",
     },
   };
 };
 
-export { emailVerificationMailgenContent, forgotPasswordMailgenContent, sendEmail };
+export {
+  sendEmail,
+  emailVerificationMailgenContent,
+  forgotPasswordMailgenContent,
+};
